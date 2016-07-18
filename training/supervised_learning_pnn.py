@@ -100,6 +100,8 @@ else:
                         nb_epoch=nb_epoch,
                         validation_data=(x_test, y_test))
 
+    model.save_weights(path)
+
 ## check result of training
 state = GameState()
 
