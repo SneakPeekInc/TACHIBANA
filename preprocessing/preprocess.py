@@ -7,7 +7,7 @@ import copy
 C = category()
 
 def load_kif(i):
-	hands = np.load("/Users/kento_watanabe/Desktop/TACHIBANA_project/TACHIBANA/kif_npy/kif_{}.npy".format(i))
+	hands = np.load("/Users/kento_watanabe/kif_npy/kif_{}.npy".format(i))
 	#hands = np.load("/home/kosuda/work/tachibana/kif_npy/kif_2.npy")
 	#print(hands)
 
