@@ -22,6 +22,7 @@ from TACHIBANA.legal.gote_shogi_legal import GoteShogi
 from TACHIBANA.models.CNNpolicy import CNNpolicy
 
 
+# oppai
 SENTE = +1
 GOTE  = -1
 EMPTY =  0
