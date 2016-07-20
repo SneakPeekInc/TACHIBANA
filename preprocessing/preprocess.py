@@ -7,7 +7,7 @@ import copy
 C = category()
 
 def load_kif(i):
-	hands = np.load("/Users/kento_watanabe/kif_npy/kif_{}.npy".format(i))
+	hands = np.load("/home/kento/TACHIBANA_project/kif_npy/kif_{}.npy".format(i))
 	#hands = np.load("/home/kosuda/work/tachibana/kif_npy/kif_2.npy")
 	#print(hands)
 
@@ -118,6 +118,12 @@ def make_gote_datasets_for_dense(m,n):
 				f.write(str(x) + "\n")
 
 		return x_gote_dataset, y_gote_dataset
+
+def ImageNet(X, Y, size):
+	x_train_batch = [X[x:x + size] for x in range(0, len(X), size)]
+	y_train_batch = [Y[x:x + size] for x in range(0, len(X), size)]
+	return x_train_batch, y_train_batch
+
 
 
 if __name__ == "__main__":

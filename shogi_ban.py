@@ -55,8 +55,8 @@ class GameState(object):
 
         #絶対pathでおなしゃす！
         pwd = sys.argv[0]
-        path_to_sente_cate = "/Users/kento_watanabe/Desktop/TACHIBANA_project/TACHIBANA/preprocessing/sente_category.npy"
-        path_to_gote_cate = "/Users/kento_watanabe/Desktop/TACHIBANA_project/TACHIBANA/preprocessing/gote_category.npy"
+        path_to_sente_cate = "/home/kento/TACHIBANA_project/TACHIBANA/preprocessing/sente_category.npy"
+        path_to_gote_cate = "/home/kento/TACHIBANA_project/TACHIBANA/preprocessing/gote_category.npy"
         self.sente_category = np.load(path_to_sente_cate).tolist()
         self.gote_category = np.load(path_to_gote_cate).tolist()
 
