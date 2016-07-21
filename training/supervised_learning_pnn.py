@@ -21,8 +21,8 @@ from TACHIBANA.models.CNNpolicy import CNNpolicy
 # THEANO_FLAGS=mode=FAST_RUN,device=gpu,floatX=float32 python supervised_learning_pnn.py -p=1
 
 DATA_AUGUMENTATION = True
-batch_size = 10
-nb_epoch = 5
+batch_size = 100
+nb_epoch = 1
 
 def to_categorical(y, nb_classes=None):
     '''Convert class vector (integers from 0 to nb_classes)
@@ -122,7 +122,7 @@ else:
 
     model.evaluate_generator(datagen.flow(x_test,y_test),
                              batch_size=5,
-                             val_samplessamples=3000)
+                             val_samples=3000)
 
     model.save_weights(path)
 

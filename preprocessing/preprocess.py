@@ -110,9 +110,6 @@ def make_dataset_with_multiprocess(player,core,split_data):
 	x_dataset = [item for sublist in x_dataset for item in sublist]
 	y_dataset = [item for sublist in y_dataset for item in sublist]
 
-	print(x_dataset[0])
-	print(y_dataset[0])
-
 	return x_dataset, y_dataset
 
 
