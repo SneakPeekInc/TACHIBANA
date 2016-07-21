@@ -57,7 +57,7 @@ assert args.player==1 or args.player==-1, error
 if args.player == 1:
     model.load_weights("../parameters/sente_policy_net_weights.hdf5")
     path = "../parameters/sente_policy_net_weights.hdf5"
-    split_datas = ps.split_namelist(core=3,n=100)
+    split_datas = ps.split_namelist(core=3,n=10)
     x_dataset, y_dataset = \
     ps.make_dataset_with_multiprocess(player=1,core=3,split_data=split_datas)
 
@@ -120,9 +120,12 @@ else:
                         nb_epoch=nb_epoch,
                         validation_data=None)
 
-    model.evaluate_generator(datagen.flow(x_test,y_test),
-                             batch_size=5,
+    print("Now evaluating...")
+    score = model.evaluate_generator(datagen.flow(x_test,y_test,
+                             batch_size=100),
                              val_samples=3000)
+    print("losss: ", score[0])
+    print("acc: ", score[1])
 
     model.save_weights(path)
 
