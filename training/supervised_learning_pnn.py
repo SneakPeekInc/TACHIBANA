@@ -64,7 +64,9 @@ if args.player == 1:
 elif args.player == -1:
     model.load_weights("../parameters/gote_policy_net_weights.hdf5")
     path = "../parameters/gote_policy_net_weights.hdf5"
-    x_dataset, y_dataset = ps.make_gote_datasets(1,3)
+    split_datas = ps.split_namelist(core=3,n=100)
+    x_dataset, y_dataset = \
+    ps.make_dataset_with_multiprocess(player=-1,core=3,split_data=split_datas)
 
 x_dataset = np.asarray(x_dataset)
 y_dataset = np.asarray(y_dataset)

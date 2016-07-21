@@ -51,76 +51,40 @@ def make_sente_datasets(filenames):
 
 	return x_sente_dataset, y_sente_dataset
 
-def make_gote_datasets(filename):
+def make_gote_datasets(filenames):
 	x_gote_dataset = []
 	y_gote_dataset = []
 	gote_error_list = []
-	try:
-		hands = load_kif(filename)
-		#print("read kif_{}.npy!!".format(i))
-		#print(hands)
-	except:
-		print("{} is failed!!".format(filename))
+	for filename in filenames:
+		try:
+			hands = load_kif(filename)
+			print("read"+filename+"!!")
+			#print(hands)
+		except:
+			print("{} is failed!!".format(filename))
+			continue
 
-	state = GameState()
-	for n in hands:
-		next_hand = C.del_turns(n)
-		current_board = copy.copy(state.board)
-		if state.is_end_game:break
-		if state.next_player < 0:
-			try:
-				# 後手のinfoを取ってきたい時は引数に−1を選択
-				y_gote_dataset.append(C.get_index(-1,next_hand))
-				x_gote_dataset.append(current_board)
-			except:
-				gote_error_list.append(filename)
-				print("######## kif_{}.npy has any problem!! #########".format(filename))
-				break
-		state.update_board(n)
+		state = GameState()
+		for n in hands:
+			next_hand = C.del_turns(n)
+			current_board = copy.copy(state.board)
+			if state.is_end_game:break
+			if state.next_player < 0:
+				try:
+					# 後手のinfoを取ってきたい時は引数に−1を選択
+					y_gote_dataset.append(C.get_index(-1,next_hand))
+					x_gote_dataset.append(current_board)
+				except:
+					gote_error_list.append(filename)
+					print("######## kif_{}.npy has any problem!! #########".format(filename))
+					break
+			state.update_board(n)
 
 	with open("gote_error_list.txt", "w") as f:
 		for x in gote_error_list:
 			f.write(str(x) + "\n")
 
 	return x_gote_dataset, y_gote_dataset
-
-def make_gote_datasets_for_dense(m,n):
-		x_gote_dataset = []
-		y_gote_dataset = []
-		gote_error_list = []
-		for i in range(m,n):
-			try:
-				hands = load_kif(i)
-				print("read kif_{}.npy!!".format(i))
-			except:
-				print("kif_{}.npy is failed!!".format(i))
-				continue
-
-			state = GameState()
-			for n in hands:
-				next_hand = C.del_turns(n)
-				current_board = copy.deepcopy(state.board)
-				if state.is_end_game:break
-				if state.next_player < 0:
-					try:
-						# 後手のinfoを取ってきたい時は引数に−1を選択
-						target = [0,] * 9252
-						index = C.get_index(-1,next_hand)
-						target[index] = 1
-						y_gote_dataset.append(target)
-						x_gote_dataset.append(current_board)
-					except:
-						gote_error_list.append(i)
-						print("######## kif_{}.npy has any problem!! #########".format(i))
-						break
-				state.update_board(n)
-
-		with open("gote_error_list.txt", "w") as f:
-			for x in gote_error_list:
-				f.write(str(x) + "\n")
-
-		return x_gote_dataset, y_gote_dataset
-
 
 def get_n_filenames(n):
 	name_list = os.listdir("/home/kento/TACHIBANA_project/kif_npy")
@@ -139,18 +103,15 @@ def make_dataset_with_multiprocess(player,core,split_data):
 		results_list = pool.map(make_sente_datasets, split_data)
 	else:
 		results_list = pool.map(make_gote_datasets, split_data)
-	#for i in range(len(results_list)):
-	#	print(results_list[i][0][0])
-	#	print(results_list[i][1][0])
-	print(len(results_list))
+
 	x_dataset = [results_list[i][0] for i in range(len(results_list))]
 	y_dataset = [results_list[i][1] for i in range(len(results_list))]
 
 	x_dataset = [item for sublist in x_dataset for item in sublist]
 	y_dataset = [item for sublist in y_dataset for item in sublist]
 
-	print(len(x_dataset),"##")
-	print(len(y_dataset),"##")
+	print(x_dataset[0])
+	print(y_dataset[0])
 
 	return x_dataset, y_dataset
 
