@@ -2,28 +2,32 @@
 import numpy as np
 from TACHIBANA.shogi_ban import GameState
 from TACHIBANA.preprocessing.categorize import category
+
 import copy
+import os
+from multiprocessing import Pool
 
 C = category()
 
-def load_kif(i):
-	hands = np.load("/Users/kento_watanabe/kif_npy/kif_{}.npy".format(i))
+def load_kif(filename):
+	hands = np.load("/home/kento/TACHIBANA_project/kif_npy/"+filename)
 	#hands = np.load("/home/kosuda/work/tachibana/kif_npy/kif_2.npy")
 	#print(hands)
 
 	return hands
 
-def make_sente_datasets(m,n):
+def make_sente_datasets(filenames):
 	x_sente_dataset = []
 	y_sente_dataset = []
 	error_list = []
-	for i in range(m,n):
+	for filename in filenames:
 		try:
-			hands = load_kif(i)
-			print("read kif_{}.npy!!".format(i))
+			#print(filename)
+			hands = load_kif(filename)
+			print("read " +filename + "!!")
 			#print(hands)
 		except:
-			print("kif_{}.npy is failed!!".format(i))
+			print("{} is failed!!".format(filename))
 			continue
 
 		state = GameState()
@@ -36,8 +40,8 @@ def make_sente_datasets(m,n):
 					y_sente_dataset.append(C.get_index(1,next_hand))
 					x_sente_dataset.append(current_board)
 				except:
-					error_list.append(i)
-					print("######## kif_{}.npy has any problem!! #########".format(i))
+					error_list.append(filename)
+					print("######## kif_{}.npy has any problem!! #########".format(filename))
 					break
 			state.update_board(n)
 
@@ -47,34 +51,32 @@ def make_sente_datasets(m,n):
 
 	return x_sente_dataset, y_sente_dataset
 
-def make_gote_datasets(m,n):
+def make_gote_datasets(filename):
 	x_gote_dataset = []
 	y_gote_dataset = []
 	gote_error_list = []
-	for i in range(m,n):
-		try:
-			hands = load_kif(i)
-			print("read kif_{}.npy!!".format(i))
-			#print(hands)
-		except:
-			print("kif_{}.npy is failed!!".format(i))
-			continue
+	try:
+		hands = load_kif(filename)
+		#print("read kif_{}.npy!!".format(i))
+		#print(hands)
+	except:
+		print("{} is failed!!".format(filename))
 
-		state = GameState()
-		for n in hands:
-			next_hand = C.del_turns(n)
-			current_board = copy.copy(state.board)
-			if state.is_end_game:break
-			if state.next_player < 0:
-				try:
-					# 後手のinfoを取ってきたい時は引数に−1を選択
-					y_gote_dataset.append(C.get_index(-1,next_hand))
-					x_gote_dataset.append(current_board)
-				except:
-					gote_error_list.append(i)
-					print("######## kif_{}.npy has any problem!! #########".format(i))
-					break
-			state.update_board(n)
+	state = GameState()
+	for n in hands:
+		next_hand = C.del_turns(n)
+		current_board = copy.copy(state.board)
+		if state.is_end_game:break
+		if state.next_player < 0:
+			try:
+				# 後手のinfoを取ってきたい時は引数に−1を選択
+				y_gote_dataset.append(C.get_index(-1,next_hand))
+				x_gote_dataset.append(current_board)
+			except:
+				gote_error_list.append(filename)
+				print("######## kif_{}.npy has any problem!! #########".format(filename))
+				break
+		state.update_board(n)
 
 	with open("gote_error_list.txt", "w") as f:
 		for x in gote_error_list:
@@ -118,6 +120,40 @@ def make_gote_datasets_for_dense(m,n):
 				f.write(str(x) + "\n")
 
 		return x_gote_dataset, y_gote_dataset
+
+
+def get_n_filenames(n):
+	name_list = os.listdir("/home/kento/TACHIBANA_project/kif_npy")
+	return name_list[0:n]
+
+def split_namelist(core, n):
+	name_list = get_n_filenames(n)
+	size = int(len(name_list)/core)
+	split_data = [name_list[x:x + size] for x in range(0, len(name_list), size)]
+	return split_data[0:-1]
+
+def make_dataset_with_multiprocess(player,core,split_data):
+	results_list = [None for row in range(core)]
+	pool = Pool(processes=3)
+	if player==1:
+		results_list = pool.map(make_sente_datasets, split_data)
+	else:
+		results_list = pool.map(make_gote_datasets, split_data)
+	#for i in range(len(results_list)):
+	#	print(results_list[i][0][0])
+	#	print(results_list[i][1][0])
+	print(len(results_list))
+	x_dataset = [results_list[i][0] for i in range(len(results_list))]
+	y_dataset = [results_list[i][1] for i in range(len(results_list))]
+
+	x_dataset = [item for sublist in x_dataset for item in sublist]
+	y_dataset = [item for sublist in y_dataset for item in sublist]
+
+	print(len(x_dataset),"##")
+	print(len(y_dataset),"##")
+
+	return x_dataset, y_dataset
+
 
 
 if __name__ == "__main__":
