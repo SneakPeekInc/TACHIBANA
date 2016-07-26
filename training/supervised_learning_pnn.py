@@ -55,18 +55,18 @@ error = "###### You have to choose player you wanna train!! ######"
 assert args.player==1 or args.player==-1, error
 
 if args.player == 1:
-    model.load_weights("../parameters/sente_policy_net_weights.hdf5")
+    #model.load_weights("../parameters/sente_policy_net_weights.hdf5")
     path = "../parameters/sente_policy_net_weights.hdf5"
-    split_datas = ps.split_namelist(core=3,n=10)
+    split_datas = ps.split_namelist(core=7,n=100)
     x_dataset, y_dataset = \
-    ps.make_dataset_with_multiprocess(player=1,core=3,split_data=split_datas)
+    ps.make_dataset_with_multiprocess(player=1,core=7,split_data=split_datas)
 
 elif args.player == -1:
-    model.load_weights("../parameters/gote_policy_net_weights.hdf5")
+    #model.load_weights("../parameters/gote_policy_net_weights.hdf5")
     path = "../parameters/gote_policy_net_weights.hdf5"
-    split_datas = ps.split_namelist(core=3,n=100)
+    split_datas = ps.split_namelist(core=7,n=1000)
     x_dataset, y_dataset = \
-    ps.make_dataset_with_multiprocess(player=-1,core=3,split_data=split_datas)
+    ps.make_dataset_with_multiprocess(player=-1,core=7,split_data=split_datas)
 
 x_dataset = np.asarray(x_dataset)
 y_dataset = np.asarray(y_dataset)
@@ -76,8 +76,10 @@ nb_data = x_dataset.shape[0]
 x_train,x_test = np.split(x_dataset,[nb_data*0.9])
 y_train,y_test = np.split(y_dataset,[nb_data*0.9])
 
-x_train = x_train.reshape(x_train.shape[0], 1, 15, 9)
-x_test = x_test.reshape(x_test.shape[0], 1, 15, 9)
+#x_train = x_train.reshape(x_train.shape[0], 1, 15, 9)
+#x_test = x_test.reshape(x_test.shape[0], 1, 15, 9)
+x_train = x_train.reshape(x_train.shape[0], 1, 11, 9)
+x_test = x_test.reshape(x_test.shape[0], 1, 11, 9)
 
 y_train = y_train.reshape((y_train.shape[0],1))
 y_test = y_test.reshape((y_test.shape[0],1))
@@ -133,7 +135,7 @@ else:
 state = GameState()
 
 ## print move and probability ranking ##
-board = state.board.reshape(1, 1, 15, 9)
+board = state.board.reshape(1, 1, 11, 9)
 check = model.predict(board)
 
 argsort = np.argsort(-check)

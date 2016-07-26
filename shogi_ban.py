@@ -28,13 +28,11 @@ EMPTY =  0
 
 class GameState(object):
     def __init__(self):
-        self.ban_size=9
-        self.dai_size=6
         self.board = self.initial_board()
         self.turn = SENTE
         self.next_player = SENTE
-        self.koma_dai_sente = []
-        self.koma_dai_gote = []
+        self.sente = SenteShogi()
+        self.gote = GoteShogi()
         self.is_end_game = False
         self.NUM2KANJI_DIC = {
         1:  "歩", -1:  "g歩",
@@ -55,14 +53,14 @@ class GameState(object):
 
         #絶対pathでおなしゃす！
         pwd = sys.argv[0]
-        path_to_sente_cate = "/home/kento/TACHIBANA_project/TACHIBANA/preprocessing/sente_category.npy"
-        path_to_gote_cate = "/home/kento/TACHIBANA_project/TACHIBANA/preprocessing/gote_category.npy"
+        path_to_sente_cate = "/home/kosuda/work/TACHIBANA/preprocessing/sente_category.npy"
+        path_to_gote_cate = "/home/kosuda/work/TACHIBANA/preprocessing/gote_category.npy"
         self.sente_category = np.load(path_to_sente_cate).tolist()
         self.gote_category = np.load(path_to_gote_cate).tolist()
 
     @staticmethod
     def initial_board():
-        board = np.zeros((15, 9))
+        board = np.zeros((11, 9))
         #歩の配置
         board[0:8][6] = 1
         board[0:8][2] = -1
@@ -94,101 +92,55 @@ class GameState(object):
         return board
 
     def update_board(self,Info,key=1,*board):
-        if key == 1:
-            board = self.board
         ## 盤上の駒をアップデートする関数 ##
         # Infoは[(before),(after),koma,teban]のリストが入っている。
-        before = Info[0]
-        after = Info[1]
-        koma = Info[2]
-        teban = Info[3]
-
         # 手番から次に指すプレイヤーを更新
+        #Info_convert = lambda Info : Info[0], Info[1], Info[2], Info[3] 
+        before, after, koma, teban = self.Info_convert(Info)
         self.check_turn(teban)
 
         # 後手番ならコマにマイナスをかける
-        if self.turn < 0:
-            koma = koma * -1
-        #test
-        #rint(self.board)
-        #print(before,after,koma)
+        if self.turn > 0:
+            koma_dai = self.sente.SENTE_KOMADAI
+        elif self.turn < 0:
+            koma *= -1
+            koma_dai = self.gote.GOTE_KOMADAI
 
-        if self.is_end_game is False:
-            # "打"に対する挙動
-            if before[0] < 0:
-                self.put_koma(koma)
-            else:
-                board[before[0]][before[1]] = 0
+        # "打"に対する挙動
+        if before == (-1,9):
+            self.board[koma_dai[koma]]-=1 #put_koma()
+        else:
+            self.board[before] = 0
 
-            # afterの位置に相手駒があった時の操作
-            if board[after[0]][after[1]] != 0:
-                self.get_koma(after[0],after[1])
-            # 駒を置く
-            board[after[0]][after[1]] = koma
+        # afterの位置に相手駒があった時の操作
+        if self.board[after] != 0:
+            self.board[koma_dai[self._get_koma(self.board, after)]] += 1
 
-            # turnは今のstateを作り出したやつ。
-            # next_playerが次指すやつ。
-            self.next_player = -1 * self.turn
+        # 駒を置く
+        self.board[after] = koma
 
-        #elif self.is_end_game:
-            # is_end_gameにフラグがたったらgame over
+        # turnは今のstateを作り出したやつ。
+        # next_playerが次指すやつ。
+        self.next_player = -1 * self.turn
+
+        # is_end_gameにフラグがたったらgame over
+        #if self.is_end_game is True:
             #print("-------GAME OVER!!-------")
+    
+    @staticmethod
+    def Info_convert(Info):
+        return Info[0], Info[1], Info[2], Info[3]
 
 
-    def get_koma(self, r, c):
+    @staticmethod
+    def _get_koma(board, after):
         ## 駒をとった時に呼び出す関数 ##s
         # -1かけて自分の駒にする
-        koma = -self.board[r][c]
+        koma = -board[after]
         # もし成駒だったらひっくり返す
-        koma = self.reverse_koma(koma)
+        reverse_koma = lambda koma : koma - np.sign(koma)*8 if math.fabs(koma) > 8 else koma
 
-        if self.turn > 0:
-            self.koma_dai_sente.append(koma)
-        elif self.turn < 0:
-            self.koma_dai_gote.append(koma)
-        self.update_koma_dai()
-
-    def reverse_koma(self,koma):
-        ## 成駒をとった時の操作 ##
-        if self.turn > 0 and koma > 8:
-            koma-=8
-        elif self.turn < 0 and koma < -8:
-            koma+=8
-        return koma
-
-    def update_koma_dai(self):
-        ##　駒台をソートして並べ替える関数 ##
-
-        # 一度駒台をからにする。
-        self.empty_koma_dai()
-
-        if self.turn > 0:
-            self.koma_dai_sente.sort()
-            i = 9
-            j = 0
-            for n in self.koma_dai_sente:
-                if n < 0 or n == 8:
-                    import sys
-                    sys.stderr.write('Error occurred!')
-                self.board[i][j] = n
-                j+=1
-                if j == 9:
-                    i+=1
-                    j=0
-
-        elif self.turn < 0:
-            self.koma_dai_gote.sort()
-            i = 12
-            j = 0
-            for n in self.koma_dai_gote:
-                if n > 0 or n == -8:
-                    import sys
-                    sys.stderr.write('Error occurred!')
-                self.board[i][j] = n
-                j+=1
-                if j == 9:
-                    i+=1
-                    j=0
+        return reverse_koma(koma)
 
     def check_turn(self,n):
         if n == 0:
@@ -197,25 +149,6 @@ class GameState(object):
             self.turn = SENTE
         else:
             self.turn = GOTE
-
-    def put_koma(self,koma):
-        if self.turn > 0:
-            self.koma_dai_sente.remove(koma)
-        else:
-            self.koma_dai_gote.remove(koma)
-        self.update_koma_dai()
-
-    def empty_koma_dai(self):
-        if self.turn > 0:
-            # 先手の駒台を空にする
-            for a in range(9,12):
-                for b in range(0,9):
-                    self.board[a][b] = 0
-        else:
-            # 後手の駒台を空にする
-            for a in range(12,15):
-                for b in range(0,9):
-                    self.board[a][b] = 0
 
     @staticmethod
     def del_turns(ls):
@@ -238,6 +171,14 @@ class GameState(object):
 
 
 if __name__ == "__main__":
+
+    t = GameState()
+    print(t.board)
+    Info = ((1,7),(7,1),5,2)
+    t.update_board(Info)
+    print(t.board)
+
+    """
 
     parser = argparse.ArgumentParser(description='TACHIBANA: Supervised Learinig CNNpolicy')
 
@@ -387,3 +328,4 @@ if __name__ == "__main__":
     is_winner = State.turn * (-1)
     print("## WINNER {} ##".format(is_winner))
     #print("プラチナむかつく！")
+    """

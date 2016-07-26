@@ -21,8 +21,9 @@ class GoteShogi(object):
             (-1,-1):[4,5,7,8,9,10,11,12,13,14]
             }
         self.KEIMA_ls = [(2,-1),(2,1)]
+        self.GOTE_KOMADAI = {
+            -koma : (10,c) for koma,c in zip(range(1,8), range(0,7)) }
 
-       #self.state
 
     ## 後手から見た座標に基づく将棋のルールを定義する ##
     @staticmethod

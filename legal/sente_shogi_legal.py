@@ -21,6 +21,8 @@ class SenteShogi():
             (-1,-1):[-4,-5,-8,-13,-14],
             }
         self.KEIMA_ls = [(-2,-1),(-2,1)]
+        self.SENTE_KOMADAI = {
+            koma : (9,c) for koma,c in zip(range(1,8), range(0,7)) }
 
     ## 先手から見た座標に基づく将棋のルールを定義する ##
     @staticmethod

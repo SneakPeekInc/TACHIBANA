@@ -32,8 +32,10 @@ class CNNpolicy(object):
         x_train,x_test = np.split(x_dataset,[nb_data*0.9])
         y_train,y_test = np.split(y_dataset,[nb_data*0.9])
 
-        x_train = x_train.reshape(x_train.shape[0], 1, 15, 9)
-        x_test = x_test.reshape(x_test.shape[0], 1, 15, 9)
+        #x_train = x_train.reshape(x_train.shape[0], 1, 15, 9)
+        #x_test = x_test.reshape(x_test.shape[0], 1, 15, 9)
+        x_train = x_train.reshape(x_train.shape[0], 1, 11, 9)
+        x_test = x_test.reshape(x_test.shape[0], 1, 11, 9)
 
         y_train = np_utils.to_categorical(y_train, nb_classes)
         y_test = np_utils.to_categorical(y_test, nb_classes)
@@ -51,7 +53,8 @@ class CNNpolicy(object):
                     nb_filter=128,
                     nb_row=5,
                     nb_col=5,
-                    input_shape=(1,15,9),
+                    input_shape=(1,11,9),
+                    #input_shape=(1,15,9),
                     init="uniform",
                     activation="relu",
                     border_mode="same"))

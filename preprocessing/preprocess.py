@@ -10,8 +10,8 @@ from multiprocessing import Pool
 C = category()
 
 def load_kif(filename):
-	hands = np.load("/home/kento/TACHIBANA_project/kif_npy/"+filename)
-	#hands = np.load("/home/kosuda/work/tachibana/kif_npy/kif_2.npy")
+	#hands = np.load("/home/kento/TACHIBANA_project/kif_npy/"+filename)
+	hands = np.load("/home/kosuda/work/kif_npy/"+filename)
 	#print(hands)
 
 	return hands
@@ -87,7 +87,7 @@ def make_gote_datasets(filenames):
 	return x_gote_dataset, y_gote_dataset
 
 def get_n_filenames(n):
-	name_list = os.listdir("/home/kento/TACHIBANA_project/kif_npy")
+	name_list = os.listdir("/home/kosuda/work/kif_npy")
 	return name_list[0:n]
 
 def split_namelist(core, n):
