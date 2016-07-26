@@ -1,4 +1,34 @@
+import TACHIBANA.preprocessing.preprocess as ps
 import argparse
+parser = argparse.ArgumentParser(description='TACHIBANA: Supervised Learinig CNNpolicy')
+
+parser.add_argument('--player', '-p', default=0, type=int,
+                    help='GPU ID (negative value indicates CPU)')
+
+args = parser.parse_args()
+
+
+error = "###### You have to choose player you wanna train!! ######"
+assert args.player==1 or args.player==-1, error
+
+if args.player == 1:
+    #model.load_weights("../parameters/sente_policy_net_weights.hdf5")
+    path = "../parameters/sente_policy_net_weights.hdf5"
+    split_datas = ps.split_namelist(core=7,n=10000)
+    x_dataset, y_dataset = \
+    ps.make_dataset_with_multiprocess(player=1,core=7,split_data=split_datas)
+
+elif args.player == -1:
+    #model.load_weights("../parameters/gote_policy_net_weights.hdf5")
+    path = "../parameters/gote_policy_net_weights.hdf5"
+    split_datas = ps.split_namelist(core=7,n=10000)
+    x_dataset, y_dataset = \
+    ps.make_dataset_with_multiprocess(player=-1,core=7,split_data=split_datas)
+
+
+
+
+
 import time
 
 from keras.preprocessing.image import ImageDataGenerator
@@ -14,7 +44,6 @@ import numpy as np
 import json
 
 from TACHIBANA.shogi_ban import GameState
-import TACHIBANA.preprocessing.preprocess as ps
 from TACHIBANA.models.CNNpolicy import CNNpolicy
 
 
@@ -35,13 +64,6 @@ def to_categorical(y, nb_classes=None):
         Y[i, y[i]] = 1.
     return Y
 
-parser = argparse.ArgumentParser(description='TACHIBANA: Supervised Learinig CNNpolicy')
-
-parser.add_argument('--player', '-p', default=0, type=int,
-                    help='GPU ID (negative value indicates CPU)')
-
-args = parser.parse_args()
-
 cnn_policy = CNNpolicy()
 model = cnn_policy.create_network()
 model = model_from_json(open('../models/CNNpolicy_architecture.json').read())
@@ -51,22 +73,7 @@ model.compile(loss="categorical_crossentropy",
               optimizer=adam,
               metrics=["accuracy"])
 
-error = "###### You have to choose player you wanna train!! ######"
-assert args.player==1 or args.player==-1, error
-
-if args.player == 1:
-    #model.load_weights("../parameters/sente_policy_net_weights.hdf5")
-    path = "../parameters/sente_policy_net_weights.hdf5"
-    split_datas = ps.split_namelist(core=7,n=100)
-    x_dataset, y_dataset = \
-    ps.make_dataset_with_multiprocess(player=1,core=7,split_data=split_datas)
-
-elif args.player == -1:
-    #model.load_weights("../parameters/gote_policy_net_weights.hdf5")
-    path = "../parameters/gote_policy_net_weights.hdf5"
-    split_datas = ps.split_namelist(core=7,n=1000)
-    x_dataset, y_dataset = \
-    ps.make_dataset_with_multiprocess(player=-1,core=7,split_data=split_datas)
+#####################
 
 x_dataset = np.asarray(x_dataset)
 y_dataset = np.asarray(y_dataset)

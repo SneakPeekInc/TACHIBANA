@@ -1,5 +1,1 @@
-kif_63268.npy
-kif_39020.npy
-kif_48127.npy
-kif_15927.npy
-kif_36584.npy
+kif_45927.npy
