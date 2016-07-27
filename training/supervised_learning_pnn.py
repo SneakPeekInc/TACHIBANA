@@ -12,15 +12,15 @@ error = "###### You have to choose player you wanna train!! ######"
 assert args.player==1 or args.player==-1, error
 
 if args.player == 1:
-    #model.load_weights("../parameters/sente_policy_net_weights.hdf5")
-    path = "../parameters/sente_policy_net_weights.hdf5"
+    model.load_weights("./parameters/sente_policy_net_weights.hdf5")
+    path = "./parameters/sente_policy_net_weights.hdf5"
     split_datas = ps.split_namelist(core=7,n=40000)
     x_dataset, y_dataset = \
     ps.make_dataset_with_multiprocess(player=1,core=7,split_data=split_datas)
 
 elif args.player == -1:
-    #model.load_weights("../parameters/gote_policy_net_weights.hdf5")
-    path = "../parameters/gote_policy_net_weights.hdf5"
+    model.load_weights("./parameters/gote_policy_net_weights.hdf5")
+    path = "./parameters/gote_policy_net_weights.hdf5"
     split_datas = ps.split_namelist(core=7,n=10000)
     x_dataset, y_dataset = \
     ps.make_dataset_with_multiprocess(player=-1,core=7,split_data=split_datas)
@@ -66,7 +66,7 @@ def to_categorical(y, nb_classes=None):
 
 cnn_policy = CNNpolicy()
 model = cnn_policy.create_network()
-model = model_from_json(open('../models/CNNpolicy_architecture.json').read())
+model = model_from_json(open('./models/CNNpolicy_architecture.json').read())
 sgd = SGD(lr=.03, decay=.0001)
 adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
 model.compile(loss="categorical_crossentropy",

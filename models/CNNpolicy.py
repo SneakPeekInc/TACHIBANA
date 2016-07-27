@@ -107,6 +107,6 @@ if __name__ == "__main__":
 
     print("Can we read model from json file...?")
 
-    model = model_from_json(open('CNNpolicy_architecture.json').read())
-    model.load_weights('../parameters/gote_policy_net_weights.hdf5')
+    model = model_from_json(open('./models/CNNpolicy_architecture.json').read())
+    model.load_weights('./parameters/gote_policy_net_weights.hdf5')
     print("...you can!")
