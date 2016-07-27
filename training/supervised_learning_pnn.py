@@ -1,5 +1,7 @@
 import TACHIBANA.preprocessing.preprocess as ps
 import argparse
+import sys
+
 parser = argparse.ArgumentParser(description='TACHIBANA: Supervised Learinig CNNpolicy')
 
 parser.add_argument('--player', '-p', default=0, type=int,
@@ -12,11 +14,12 @@ error = "###### You have to choose player you wanna train!! ######"
 assert args.player==1 or args.player==-1, error
 
 if args.player == 1:
-    model.load_weights("./parameters/sente_policy_net_weights.hdf5")
+    #model.load_weights("./parameters/sente_policy_net_weights.hdf5")
     path = "./parameters/sente_policy_net_weights.hdf5"
-    split_datas = ps.split_namelist(core=7,n=40000)
+    split_datas = ps.split_namelist(core=7,n=20000)
     x_dataset, y_dataset = \
-    ps.make_dataset_with_multiprocess(player=1,core=7,split_data=split_datas)
+    ps.make_dataset_with_multiprocess(player=1,core=8,split_data=split_datas)
+    #ps.make_sente_datasets_one_core(0,20000)
 
 elif args.player == -1:
     model.load_weights("./parameters/gote_policy_net_weights.hdf5")
@@ -25,6 +28,7 @@ elif args.player == -1:
     x_dataset, y_dataset = \
     ps.make_dataset_with_multiprocess(player=-1,core=7,split_data=split_datas)
 
+sys.modules.pop('multiprocessing')
 
 
 
@@ -51,7 +55,7 @@ from TACHIBANA.models.CNNpolicy import CNNpolicy
 
 DATA_AUGUMENTATION = True
 batch_size = 200
-nb_epoch = 50
+nb_epoch = 1
 
 def to_categorical(y, nb_classes=None):
     '''Convert class vector (integers from 0 to nb_classes)
