@@ -16,10 +16,10 @@ assert args.player==1 or args.player==-1, error
 if args.player == 1:
     #model.load_weights("./parameters/sente_policy_net_weights.hdf5")
     path = "./parameters/sente_policy_net_weights.hdf5"
-    split_datas = ps.split_namelist(core=7,n=20000)
+    split_datas = ps.split_namelist(core=8,n=50000)
     x_dataset, y_dataset = \
     ps.make_dataset_with_multiprocess(player=1,core=8,split_data=split_datas)
-    #ps.make_sente_datasets_one_core(0,20000)
+    #ps.make_sente_datasets_one_core(0,100)
 
 elif args.player == -1:
     model.load_weights("./parameters/gote_policy_net_weights.hdf5")
@@ -55,7 +55,7 @@ from TACHIBANA.models.CNNpolicy import CNNpolicy
 
 DATA_AUGUMENTATION = True
 batch_size = 200
-nb_epoch = 1
+nb_epoch = 50
 
 def to_categorical(y, nb_classes=None):
     '''Convert class vector (integers from 0 to nb_classes)

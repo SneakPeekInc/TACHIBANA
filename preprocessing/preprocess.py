@@ -109,9 +109,10 @@ def make_dataset_with_multiprocess(player,core,split_data):
 	return x_dataset, y_dataset
 
 def load_kif_one_core(i):
-    hands = np.load("../kif_npy/".format(i))
+    hands = np.load("../kif_npy/kif_{}.npy".format(i))
     #hands = np.load("/home/kento/TACHIBANA_project/kif_npy/kif_{}.npy".format(i))
     return hands
+
 def make_sente_datasets_one_core(m,n):
     x_sente_dataset = []
     y_sente_dataset = []
@@ -124,20 +125,20 @@ def make_sente_datasets_one_core(m,n):
             print("kif_{}.npy is failed!!".format(i))
             continue
 
-    state = GameState()
-    for n in hands:
-        next_hand = C.del_turns(n)
-        current_board = copy.copy(state.board)
-        if state.is_end_game:break
-        if state.next_player > 0:
-            try:
-                y_sente_dataset.append(C.get_index(1,next_hand))
-                x_sente_dataset.append(current_board)
-            except:
-                error_list.append(i)
-                print("######## kif_{}.npy has any problem!! #########".format(i))
-                break
-        state.update_board(n)
+        state = GameState()
+        for n in hands:
+            next_hand = C.del_turns(n)
+            current_board = copy.copy(state.board)
+            if state.is_end_game:break
+            if state.next_player > 0:
+                try:
+                    y_sente_dataset.append(C.get_index(1,next_hand))
+                    x_sente_dataset.append(current_board)
+                except:
+                    #error_list.append(i)
+                    print("######## kif_{}.npy has any problem!! #########".format(i))
+                    break
+            state.update_board(n)
 
     return x_sente_dataset, y_sente_dataset
 
