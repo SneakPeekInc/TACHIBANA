@@ -83,7 +83,8 @@ def make_gote_datasets(filenames):
 	return x_gote_dataset, y_gote_dataset
 
 def get_n_filenames(n):
-	name_list = os.listdir("../kif_npy")
+	#name_list = os.listdir("../kif_npy")
+	name_list = os.listdir("/home/kosuda/work/wars_kif/")
 	return name_list[0:n]
 
 def split_namelist(core, n):
@@ -94,7 +95,7 @@ def split_namelist(core, n):
 
 def make_dataset_with_multiprocess(player,core,split_data):
 	results_list = [None for row in range(core)]
-	pool = Pool(processes=3)
+	pool = Pool(processes=core)
 	if player==1:
 		results_list = pool.map(make_sente_datasets, split_data)
 	else:

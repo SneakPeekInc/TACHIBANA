@@ -95,7 +95,7 @@ class GameState(object):
         ## 盤上の駒をアップデートする関数 ##
         # Infoは[(before),(after),koma,teban]のリストが入っている。
         # 手番から次に指すプレイヤーを更新
-        #Info_convert = lambda Info : Info[0], Info[1], Info[2], Info[3] 
+        #Info_convert = lambda Info : Info[0], Info[1], Info[2], Info[3]
         before, after, koma, teban = self.Info_convert(Info)
         self.check_turn(teban)
 
@@ -126,7 +126,7 @@ class GameState(object):
         # is_end_gameにフラグがたったらgame over
         #if self.is_end_game is True:
             #print("-------GAME OVER!!-------")
-    
+
     @staticmethod
     def Info_convert(Info):
         return Info[0], Info[1], Info[2], Info[3]
@@ -171,14 +171,6 @@ class GameState(object):
 
 
 if __name__ == "__main__":
-
-    t = GameState()
-    print(t.board)
-    Info = ((1,7),(7,1),5,2)
-    t.update_board(Info)
-    print(t.board)
-
-    """
 
     parser = argparse.ArgumentParser(description='TACHIBANA: Supervised Learinig CNNpolicy')
 
@@ -226,7 +218,7 @@ if __name__ == "__main__":
             # NNで手を選択
             rank = 0
             board = deepcopy(State.board)
-            board = board.reshape(1, 1, 15, 9)
+            board = board.reshape(1, 1, 11, 9)
             predict = sente_pnn.predict(board)
             argsort = np.argsort(-predict)
             print(argsort[0][0])
@@ -255,7 +247,7 @@ if __name__ == "__main__":
                             print("もう一回！")
 
                 # infoが指せる手であるかの判定
-                if Sente.judge(State.board, info, State.koma_dai_sente):
+                if Sente.judge(State.board, info):
                     # 局面を一旦currentにコピーしてinfoをもとに局面変更
                     Current = deepcopy(State)
                     Current.update_board(info)
@@ -269,7 +261,7 @@ if __name__ == "__main__":
             # NNで手を選択
             rank = 0
             board = deepcopy(State.board)
-            board = board.reshape(1, 1, 15, 9)
+            board = board.reshape(1, 1, 11, 9)
             predict = gote_pnn.predict(board)
             argsort = np.argsort(-predict)
             print(argsort[0][0])
@@ -298,7 +290,7 @@ if __name__ == "__main__":
                         except ValueError:
                             print("もう一回！")
 
-                if Gote.judge(State.board, info, State.koma_dai_gote):
+                if Gote.judge(State.board, info):
                     #print(State.koma_dai_gote)
                     Current = deepcopy(State)
                     Current.update_board(info)
@@ -328,4 +320,3 @@ if __name__ == "__main__":
     is_winner = State.turn * (-1)
     print("## WINNER {} ##".format(is_winner))
     #print("プラチナむかつく！")
-    """

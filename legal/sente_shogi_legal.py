@@ -287,7 +287,7 @@ class SenteShogi():
 
     ## --- 選んだinfoに矛盾がないか判定する関数 --- ##
     # 引数はNNの出力で選択されたinfoと現在のstate
-    def judge(self, board, info, komadai):
+    def judge(self, board, info):
         # TrueだったらそのInfoをstateに与えるための関数
         r_b, c_b ,r_a, c_a = self.get_coordinate_info(info,key=1)
         # ベクトルを取得
@@ -297,7 +297,7 @@ class SenteShogi():
 
         if (r_b,c_b) == (-1, 9):
             #print("鬼いちゃん。その駒、本当に打てるの？")
-            if self._judge_put(board, r_a, c_a, koma, komadai):
+            if self._judge_put(board, r_a, c_a, koma):
                 if koma == 1:
                     return self.judge_nifu(board, c_a)
                 else:
@@ -465,14 +465,13 @@ class SenteShogi():
         return False
 
     @staticmethod
-    def _judge_put(board, r, c, koma, komadai):
-        if koma in komadai:
-            if board[r][c] == 0:
-                #print("あ。持ってるね。ごめんよ。")
-                return True
-            else:
-                #print("駒の上に打とうとするなんて、さすが鬼畜の鬼いちゃん")
-                return False
+    def _judge_put(board, r, c, koma):
+        if board[self.SENTE_KOMADAI[koma]] > 0:
+            #print("あ。持ってるね。ごめんよ。")
+            return True
+        else:
+            #print("駒の上に打とうとするなんて、さすが鬼畜の鬼いちゃん")
+            return False
         #print("なんだよ。その駒持ってないじゃん。やりなおし。")
         return False
 
