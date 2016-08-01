@@ -2,6 +2,7 @@
 import numpy as np
 import os
 import time
+import argparse
 from copy import deepcopy
 
 from keras.models import Sequential
@@ -19,38 +20,44 @@ from TACHIBANA.legal.gote_shogi_legal import GoteShogi
 from TACHIBANA.models.CNNpolicy import CNNpolicy
 from TACHIBANA.shogi_ban import GameState
 
-def main():
+def make_training_paris(player, mini_batch_size):
+    # player: 強化学習させたいほうのplayer。　-1 or 1
+    # mini_batch_size: 今のパラメータで行う試合の数
+
     cnn_policy = CNNpolicy()
     model = cnn_policy.create_network()
-    model = model_from_json(open('../models/CNNpolicy_architecture.json').read())
+    model = model_from_json(open('./models/CNNpolicy_architecture.json').read())
     sgd = SGD(lr=.03, decay=.0001)
     adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
     model.compile(loss="categorical_crossentropy",
                   optimizer=adam,
                   metrics=["accuracy"])
+
     sente_pnn = deepcopy(model)
     gote_pnn = deepcopy(model)
-    sente_pnn.load_weights("../parameters/sente_policy_net_weights.hdf5")
-    #gote_pnn.load_weights("../parameters/gote_policy_net_weights.hdf5")
-    #sente_pnn.load_weights("../parameters/RL_sente_policy_net_weights.hdf5")
-    gote_pnn.load_weights("../parameters/RL_gote_policy_net_weights.hdf5")
 
-    while True:
+    if player == 1:
+        sente_pnn.load_weights("./parameters/RL_sente_policy_net_weights.hdf5")
+        gote_pnn.load_weights("./parameters/gote_policy_net_weights.hdf5")
+
+    elif player == -1:
+        sente_pnn.load_weights("./parameters/sente_policy_net_weights.hdf5")
+        gote_pnn.load_weights("./parameters/RL_gote_policy_net_weights.hdf5")
+
+    X_list = []
+    y_list = []
+    winners = []
+
+    for i in range(mini_batch_size):
         State = GameState()
         Sente = SenteShogi()
         Gote = GoteShogi()
         states = []
         infos = []
-        epsilon = .1
 
         n = 1
         s_cate = State.sente_category
         g_cate = State.gote_category
-
-        ilegal_state_sente = []
-        ilegal_move_sente = []
-        ilegal_state_gote = []
-        ilegal_move_gote = []
 
         print(State.board)
 
@@ -65,16 +72,8 @@ def main():
                 board = board.reshape(1, 1, 15, 9)
                 predict = sente_pnn.predict(board)
                 argsort = np.argsort(-predict)
-                print(argsort[0][0])
-                print(argsort[0][1])
-                print(argsort[0][2])
+
                 while True:
-                    # ε-greedyっぽくしてみる
-                    #if (np.random.rand() < epsilon) and (n < 50):
-                    #    print("##### !!!!!!!!!! GREEDY !!!!!!!!!!! #####")
-                    #    index = argsort[0][rank+1]
-                    #else:
-                    #    index = argsort[0][rank]
                     index = argsort[0][rank]
                     info = s_cate[index] + [n]
                     rank += 1
@@ -83,23 +82,15 @@ def main():
                         break
                     if info == [(0,0),(0,0),0] + [n]:
                         continue
-                    ####### 対戦VERSION #######
-                    #info = [(int(input()),int(input())),(int(input()),int(input())),int(input())] + [n]
-                    # infoが指せる手であるかの判定
                     if Sente.judge(State.board, info, State.koma_dai_sente):
                         # 局面を一旦currentにコピーしてinfoをもとに局面変更
                         Current = deepcopy(State)
                         Current.update_board(info)
-                        #print(Sente.is_ote(D_board))
-                        # その手(info)を指したあと王手でなければループを抜ける
-                        print(info)
+
                         if Sente.is_ote(Current.board) is False: break
                     else:
                         tmp = deepcopy(State.board)
-                        ilegal_state_sente.append(tmp)
                         info = State.del_turns(info)
-                        ilegal_move_sente.append(s_cate.index(info))
-
 
             if State.next_player < 0:
                 print("info判定")
@@ -113,12 +104,6 @@ def main():
                 print(argsort[0][1])
                 print(argsort[0][2])
                 while True:
-                    # ε-greedyっぽくしてみる
-                    #if (np.random.rand() < epsilon) and (n < 50):
-                    #    print("##### !!!!!!!!!! GREEDY !!!!!!!!!!! #####")
-                    #    index = argsort[0][rank+1]
-                    #else:
-                    #    index = argsort[0][rank]
                     index = argsort[0][rank]
                     info = g_cate[index] + [n]
                     rank += 1
@@ -128,8 +113,6 @@ def main():
                     if info == [(0,0),(0,0),0] + [n]:
                         continue
 
-                    ####### 対戦VERSION #######
-                    #info = [(int(input()),int(input())),(int(input()),int(input())),int(input())] + [n]
                     if Gote.judge(State.board, info, State.koma_dai_gote):
                         Current = deepcopy(State)
                         Current.update_board(info)
@@ -138,126 +121,92 @@ def main():
 
                     else:
                         tmp = deepcopy(State.board)
-                        ilegal_state_gote.append(tmp)
                         info = State.del_turns(info)
-                        ilegal_move_gote.append(g_cate.index(info))
 
             state = deepcopy(State.board)
             states.append(state)
             State.update_board(info)
-            print("詰み判定")
-            # ボードのみをコピーして詰みのジャッジをする(Stateに干渉しないボード)
 
-            print("判定終了")
             print(info)
             print(rank)
             print(State.board)
             info = State.del_turns(info)
-            #print(info)
             infos.append(info)
-
-            #time.sleep(1)
             n+=1
-            if n == 255:
+            if n == 10:
                 print("とりあえずここまで！")
                 State.turn = 0
                 break
         print("プラチナむかつく！")
-
         is_winner = State.turn * (-1)
-        ##### RL gote_policy ####
         print(is_winner,"###############  WINNER  ##################")
-        ss, si, gs, gi = State.preprocess_for_RL(states,infos)
 
-        if is_winner < 0:
-            sente_lr = -1
-            gote_lr = 1
-            ilegal_state_sente = ilegal_state_sente[0:500]
-            ilegal_move_sente = ilegal_move_sente[0:500]
+        #winners.append(is_winner)
+        winners.append(1)
+        X_batch, y_batch = preprocess_for_RL(player,states,infos)
+        X_list.append(X_batch)
+        y_list.append(y_batch)
 
-        elif is_winner > 0:
-            sente_lr = 1
-            gote_lr = -1
-            ilegal_state_gote = ilegal_state_gote[0:500]
-            ilegal_move_gote = ilegal_move_gote[0:500]
+    return X_list, y_list, winners
 
+
+def preprocess_for_RL(player, states, infos):
+    path_to_sente_cate = "./preprocessing/sente_category.npy"
+    path_to_gote_cate = "./preprocessing/gote_category.npy"
+    sente_category = np.load(path_to_sente_cate).tolist()
+    gote_category = np.load(path_to_gote_cate).tolist()
+    y_batch = list()
+    if player == 1:
+        X_batch = states[::2]
+        infos = infos[::2]
+        for i,info in enumerate(infos):
+            y_batch.append(sente_category.index(info))
+    elif player == -1:
+        X_batch = states[1::2]
+        infos = infos[1::2]
+        for i,info in enumerate(infos):
+            y_batch.append(gote_category.index(info))
+
+    X_batch = np.asarray(X_batch).reshape((len(X_batch),1,15,9))
+    y_batch = np.asarray(y_batch).reshape((len(y_batch),1))
+    y_batch = np_utils.to_categorical(y_batch,9252)
+
+    return X_batch, y_batch
+
+
+def train_batch(player, X_list, y_list, winners, lr, model):
+    for X, y ,winner in zip(X_list, y_list, winners):
+        if player == winner:
+            model.optimizer.lr.set_value(lr)
         else:
-            sente_lr = -1
-            gote_lr = -1
-            ss = ss[10:]
-            si = si[10:]
-            gs = gs[10:]
-            gi = gi[10:]
-            ilegal_state_sente = ilegal_state_sente[0:100]
-            ilegal_move_sente = ilegal_move_sente[0:100]
-            ilegal_state_gote = ilegal_state_gote[0:100]
-            ilegal_move_gote = ilegal_move_gote[0:100]
-        ### for reinforcement learning ##
+            model.optimizer.lr.set_value(-lr)
 
+        model.train_on_batch(X,y,class_weight=None, sample_weight=None)
 
-        ss = np.asarray(ss)
-        si = np.asarray(si)
-        gs = np.asarray(gs)
-        gi = np.asarray(gi)
-
-        ss = ss.reshape(ss.shape[0], 1, 15, 9)
-        si = np_utils.to_categorical(si, cnn_policy.nb_classes)
-        gs = gs.reshape(gs.shape[0], 1, 15, 9)
-        gi = np_utils.to_categorical(gi, cnn_policy.nb_classes)
-        #######################################################
-
-        ### for punishing ilegal move ##
-
-        ilss = np.asarray(ilegal_state_sente)
-        ilms = np.asarray(ilegal_move_sente)
-        ilsg = np.asarray(ilegal_state_gote)
-        ilmg = np.asarray(ilegal_move_gote)
-
-        ilss = ilss.reshape(ilss.shape[0], 1, 15, 9)
-        ilms = np_utils.to_categorical(ilms, cnn_policy.nb_classes)
-        ilsg = ilsg.reshape(ilsg.shape[0], 1, 15, 9)
-        ilmg = np_utils.to_categorical(ilmg, cnn_policy.nb_classes)
-        ###########################################################
-
-
-        ############## Reinforcement Learning !!!! #####################
-
-        sente_pnn.optimizer.lr.set_value(sente_lr*0.00001)
-        gote_pnn.optimizer.lr.set_value(gote_lr*0.00001)
-
-
-        sente_pnn.model.fit(ss, si, nb_epoch=1, batch_size=len(ss))
-        sente_pnn.save_weights('../parameters/RL_sente_policy_net_weights.hdf5',overwrite=True)
-
-        gote_pnn.model.fit(gs, gi, nb_epoch=1, batch_size=len(gs))
-        gote_pnn.save_weights('../parameters/RL_gote_policy_net_weights.hdf5',overwrite=True)
-
-
-        ###############  Punishing ilegal mobve !!!!  ###################
-        print("Punish ilegal move!!")
-
-        cnn_policy = CNNpolicy()
-        model = cnn_policy.create_network()
-        model = model_from_json(open('../models/CNNpolicy_architecture.json').read())
+def run_training():
+    parser = argparse.ArgumentParser(description='Perform reinforcement learning to improve given policy network. Second phase of pipeline.')
+    parser.add_argument("--player", "-p", help="Select player who will do RL",type=int)
+    parser.add_argument("--learning_rate", "-l", help="Keras learning rate (Default: .03)", type=float, default=.03)
+    parser.add_argument("--game_batch", "-g", help="Number of games per mini-batch (Default: 20)", type=int, default=1)
+    parser.add_argument("--iterations", "-i", help="Number of training batches/iterations (Default: 10000)", type=int, default=1)
+    args = parser.parse_args()
+    for i_iter in range(1, args.iterations + 1):
+		# Make training pairs and do RL
+        X_list, y_list, winners = make_training_paris(args.player, args.game_batch)
+        # Set initial conditions
+        model = model_from_json(open('./models/CNNpolicy_architecture.json').read())
         sgd = SGD(lr=.03, decay=.0001)
         adam = Adam(lr=0.001, beta_1=0.9, beta_2=0.999, epsilon=1e-08)
         model.compile(loss="categorical_crossentropy",
                       optimizer=adam,
                       metrics=["accuracy"])
-        sente_pnn = deepcopy(model)
-        gote_pnn = deepcopy(model)
-        sente_pnn.load_weights("../parameters/RL_sente_policy_net_weights.hdf5")
-        gote_pnn.load_weights("../parameters/RL_gote_policy_net_weights.hdf5")
-
-        sente_pnn.optimizer.lr.set_value(-0.00001)
-        gote_pnn.optimizer.lr.set_value(-0.00001)
-
-        sente_pnn.model.fit(ilss, ilms, nb_epoch=1, verbose=1, batch_size=len(ilss))
-        sente_pnn.save_weights('../parameters/RL_sente_policy_net_weights.hdf5',overwrite=True)
-
-        gote_pnn.model.fit(ilsg, ilmg, nb_epoch=1, verbose=1, batch_size=len(ilsg))
-        gote_pnn.save_weights('../parameters/RL_gote_policy_net_weights.hdf5',overwrite=True)
-
-
+        if args.player == 1:
+            path = "./parameters/RL_sente_policy_net_weights.hdf5"
+        elif args.player == -1:
+            path = "./parameters/RL_gote_policy_net_weights.hdf5"
+        model.load_weights(path)
+        train_batch(args.player, X_list, y_list, winners, args.learning_rate, model)
+		# Save intermediate models
+        model.save_weights(path)
 if __name__ == "__main__":
-    main()
+    run_training()
